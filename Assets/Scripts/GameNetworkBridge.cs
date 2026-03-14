@@ -10,20 +10,43 @@ public class GameNetworkBridge : MonoBehaviourPun
     SpecialCardHandler sh;
     TurnManager       tm;
 
+    void Start()
+    {
+        StartGameIfHost();
+    }
+
     void Awake()
     {
         cm = GetComponent<CardManager>();
         sh = GetComponent<SpecialCardHandler>();
         tm = GetComponent<TurnManager>();
     }
+    [PunRPC]
+    void RPC_StartGame(string[] playerIds, int seed)
+    {
+        Debug.Log($"Oyuncu sayısı: {playerIds.Length}");
+        foreach (var id in playerIds)
+            Debug.Log($"Oyuncu ID: {id}");
 
+        Random.InitState(seed);
+        CardManager.Instance.InitializeGame(new List<string>(playerIds));
+        TurnManager.Instance.StartGame(new List<string>(playerIds));
+        StartCoroutine(RefreshUINextFrame());
+    }
+
+    System.Collections.IEnumerator RefreshUINextFrame()
+    {
+        yield return null; // bir frame bekle
+        GameUIManager.Instance?.RefreshHand();
+        GameUIManager.Instance?.RefreshScores();
+    }
     void OnEnable()
     {
         cm.OnSequenceFormed          += OnSequenceFormed_Local;
         cm.OnCardRequestedFromPlayer += OnCardRequested_Local;
-        sh.OnCursePlaced             += OnCursePlaced_Local;
-        sh.OnThiefResolved           += OnThiefResolved_Local;
-        sh.OnSacrificeResolved       += OnSacrificeResolved_Local;
+        //sh.OnCursePlaced             += OnCursePlaced_Local;
+        //sh.OnThiefResolved           += OnThiefResolved_Local;
+        //sh.OnSacrificeResolved       += OnSacrificeResolved_Local;
         tm.OnTurnStarted             += OnTurnStarted_Local;
     }
 
@@ -31,9 +54,9 @@ public class GameNetworkBridge : MonoBehaviourPun
     {
         cm.OnSequenceFormed          -= OnSequenceFormed_Local;
         cm.OnCardRequestedFromPlayer -= OnCardRequested_Local;
-        sh.OnCursePlaced             -= OnCursePlaced_Local;
-        sh.OnThiefResolved           -= OnThiefResolved_Local;
-        sh.OnSacrificeResolved       -= OnSacrificeResolved_Local;
+        //sh.OnCursePlaced             -= OnCursePlaced_Local;
+        //sh.OnThiefResolved           -= OnThiefResolved_Local;
+        //sh.OnSacrificeResolved       -= OnSacrificeResolved_Local;
         tm.OnTurnStarted             -= OnTurnStarted_Local;
     }
 
@@ -49,15 +72,6 @@ public class GameNetworkBridge : MonoBehaviourPun
         int seed = Random.Range(0, 999999);
         photonView.RPC(nameof(RPC_StartGame), RpcTarget.All,
             playerIds.ToArray(), seed);
-    }
-
-    [PunRPC]
-    void RPC_StartGame(string[] playerIds, int seed)
-    {
-        Random.InitState(seed); // Tüm cihazlarda aynı deste sırası
-        cm.InitializeGame(new List<string>(playerIds));
-        tm.StartGame(new List<string>(playerIds));
-        Debug.Log($"Oyun başladı. Oyuncular: {string.Join(", ", playerIds)}");
     }
 
     // ── Tur yönetimi ────────────────────────────────────────────

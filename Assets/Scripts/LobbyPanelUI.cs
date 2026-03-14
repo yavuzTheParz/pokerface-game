@@ -55,8 +55,8 @@ public class LobbyPanelUI : MonoBehaviourPunCallbacks
         }
 
         UpdateStatusText();
-        startBtn.interactable = AllPlayersReady() && PhotonNetwork.IsMasterClient
-                                && PhotonNetwork.CurrentRoom.PlayerCount >= 2;
+        startBtn.interactable = AllPlayersReady() && PhotonNetwork.IsMasterClient;
+                                //&& PhotonNetwork.CurrentRoom.PlayerCount >= 2;
     }
 
     public void RefreshReadyButton()
@@ -81,7 +81,7 @@ public class LobbyPanelUI : MonoBehaviourPunCallbacks
 
     void OnStartClicked()
     {
-        if (!AllPlayersReady() || PhotonNetwork.CurrentRoom.PlayerCount < 2) return;
+        if (!AllPlayersReady() || PhotonNetwork.CurrentRoom.PlayerCount < 1) return;
 
         // Odayı kapat (yeni oyuncu giremesin)
         PhotonNetwork.CurrentRoom.IsOpen = false;

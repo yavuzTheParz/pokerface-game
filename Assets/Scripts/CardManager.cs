@@ -15,6 +15,7 @@ public class CardManager : MonoBehaviour
 
     public Deck Deck { get; private set; } = new();
     Dictionary<string, PlayerHand> playerHands = new();
+    public IReadOnlyList<CardData> AllCardData => allNormalCards;
 
     void Awake()
     {
@@ -64,38 +65,39 @@ public class CardManager : MonoBehaviour
 
     // Çift turda: başka oyuncudan kart iste
     // Döner: gerçekten alındı mı (ortadan mı, elden mi)
-    public CardRequestResult RequestCard(string requesterId, string targetId, CardData requestedData)
+    public CardRequestResult RequestCard(string requesterId, CardData requestedData)
     {
         var requester = GetHand(requesterId);
-        var target    = GetHand(targetId);
 
-        // Kural: talep ettiğin kart kendi eline dizi kurabilmeli
         if (!requester.CanRequestCard(requestedData))
             return CardRequestResult.InvalidRequest;
 
-        // Hedefte bu karttan 2+ var mı?
-        var matchingCards = target.Cards.FindAll(c => c.data == requestedData && !c.isInSequence);
+        // Tüm oyuncuları tara — 2+ aynı kart var mı?
+        foreach (var kvp in playerHands)
+        {
+            if (kvp.Key == requesterId) continue;
 
-        if (matchingCards.Count >= 2)
-        {
-            // Elden al — tüm oyuncular görür
-            var taken = matchingCards[0];
-            target.RemoveCard(taken);
-            taken.ownerPlayerId = requesterId;
-            requester.AddCard(taken);
-            OnCardRequestedFromPlayer?.Invoke(requesterId, targetId, taken);
-            return CardRequestResult.TakenFromPlayer;
+            var matching = kvp.Value.Cards.FindAll(
+                c => c.data == requestedData && !c.isInSequence);
+
+            if (matching.Count >= 2)
+            {
+                var taken = matching[0];
+                kvp.Value.RemoveCard(taken);
+                taken.ownerPlayerId = requesterId;
+                requester.AddCard(taken);
+                OnCardRequestedFromPlayer?.Invoke(requesterId, kvp.Key, taken);
+                return CardRequestResult.TakenFromPlayer;
+            }
         }
-        else
-        {
-            // Ortadan ver
-            var card = Deck.Draw();
-            if (card == null) return CardRequestResult.DeckEmpty;
-            card.ownerPlayerId = requesterId;
-            requester.AddCard(card);
-            OnCardDrawnFromDeck?.Invoke(requesterId, card);
-            return CardRequestResult.TakenFromDeck;
-        }
+
+        // Kimde 2+ yoksa desteden ver
+        var card = Deck.Draw();
+        if (card == null) return CardRequestResult.DeckEmpty;
+        card.ownerPlayerId = requesterId;
+        requester.AddCard(card);
+        OnCardDrawnFromDeck?.Invoke(requesterId, card);
+        return CardRequestResult.TakenFromDeck;
     }
 
     // Dizi kurma girişimi

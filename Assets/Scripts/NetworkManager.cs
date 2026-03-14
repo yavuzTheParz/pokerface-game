@@ -26,6 +26,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public void Connect()
     {
+        PhotonNetwork.AutomaticallySyncScene = true; // ← bunu ekle
         PhotonNetwork.GameVersion = gameVersion;
         PhotonNetwork.ConnectUsingSettings();
     }

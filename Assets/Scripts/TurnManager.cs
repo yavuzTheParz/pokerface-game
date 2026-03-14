@@ -55,10 +55,18 @@ public class TurnManager : MonoBehaviour
 
     void ExecuteCardPhase()
     {
+        if (turnNumber == 0)
+        {
+            // İlk tur: ne kart dağıtımı ne talep — sadece oyuncu hamle yapar
+            OnTurnStarted?.Invoke(CurrentPlayerId, turnNumber);
+            return;
+        }
+
         if (IsOddTurn)
             HandleOddTurn();
         else
             HandleEvenTurn();
+
     }
 
     // Tek tur: ortadan otomatik kart ver
@@ -72,19 +80,19 @@ public class TurnManager : MonoBehaviour
     // Çift tur: oyuncu kart talep etmeli
     void HandleEvenTurn()
     {
+        // Buton yerine panel otomatik açılır
+        GameUIManager.Instance?.OpenRequestPanel();
         OnEvenTurnRequestRequired?.Invoke(CurrentPlayerId);
-        // UI oyuncudan hedef + kart seçimini bekler
-        // Seçim yapıldığında SubmitCardRequest() çağrılır
     }
+
 
     // ── Dışarıdan çağrılan aksiyonlar ───────────────────────────
 
     // Çift tur: oyuncu kart talebini gönderir
-    public void SubmitCardRequest(string targetId, CardData requestedCard)
+    public void SubmitCardRequest(CardData requestedCard)
     {
-        var result = cm.RequestCard(CurrentPlayerId, targetId, requestedCard);
-        OnCardRequestResult?.Invoke(CurrentPlayerId, targetId, requestedCard, result);
-        // Talep sonucu ne olursa olsun tur devam eder
+        var result = cm.RequestCard(CurrentPlayerId, requestedCard);
+        OnCardRequestResult?.Invoke(CurrentPlayerId, requestedCard, result);
     }
 
     // Oyuncu dizi kurmayı bitirdi, turu geçiyor
@@ -120,7 +128,7 @@ public class TurnManager : MonoBehaviour
 
     public event System.Action<string, int>                            OnTurnStarted;
     public event System.Action<string, Card>                           OnOddTurnCardDealt;
-    public event System.Action<string>                                 OnEvenTurnRequestRequired;
-    public event System.Action<string, string, CardData, CardRequestResult> OnCardRequestResult;
+    public event System.Action<string>                                 OnEvenTurnRequestRequired;   
+    public event System.Action<string, CardData, CardRequestResult> OnCardRequestResult;
     public event System.Action                                         OnMemePhaseTriggered;
 }

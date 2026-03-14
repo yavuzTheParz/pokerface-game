@@ -1,15 +1,17 @@
-// CardView.cs
+// CardView.cs — güncellenmiş
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
 public class CardView : MonoBehaviour
 {
-    [SerializeField] Image background;
+    [SerializeField] Image           background;
     [SerializeField] TextMeshProUGUI valueText;
     [SerializeField] TextMeshProUGUI elementText;
+    [SerializeField] Image           selectionHighlight;
 
     Card runtimeCard;
+    bool isSelected = false;
 
     public void Init(Card card)
     {
@@ -18,14 +20,23 @@ public class CardView : MonoBehaviour
         valueText.text   = card.Value.ToString();
         elementText.text = card.Element.ToString();
 
-        // Tıklanabilirlik için Button bileşeni de eklenebilir
-        GetComponent<Button>()?.onClick.AddListener(OnCardClicked);
+        selectionHighlight.gameObject.SetActive(false);
+        GetComponent<Button>().onClick.AddListener(OnClicked);
     }
 
-    void OnCardClicked()
+    void OnClicked()
     {
-        // Seçim mantığı UIManager'a event olarak gider
-        UIManager.Instance?.OnCardSelected(runtimeCard);
+        GameUIManager.Instance?.OnCardSelected(runtimeCard, this);
+    }
 
+    public void SetSelected(bool selected)
+    {
+        isSelected = selected;
+        selectionHighlight.gameObject.SetActive(selected);
+
+        // Seçili kart hafifçe yukarı kayar
+        var pos = GetComponent<RectTransform>().anchoredPosition;
+        pos.y = selected ? 20f : 0f;
+        GetComponent<RectTransform>().anchoredPosition = pos;
     }
 }

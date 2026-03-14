@@ -15,7 +15,7 @@ MonoBehaviour:
   element: 0
   value: 0
   cardType: 2
-  cardSprite: {fileID: 0}
+  cardSprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   elementColor: {r: 0.8091202, g: 0, b: 1, a: 0}
   effectType: 1
   stackCount: 1
