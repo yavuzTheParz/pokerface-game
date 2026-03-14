@@ -1,22 +1,126 @@
-using UnityEngine;
+// TurnManager.cs
 using System.Collections.Generic;
+using UnityEngine;
 
 public class TurnManager : MonoBehaviour
 {
-    public List<GameObject> players = new List<GameObject>();
+    public static TurnManager Instance { get; private set; }
 
+    CardManager cm;
+
+    List<string> playerOrder = new();
     int currentPlayerIndex = 0;
+    int turnNumber = 0;
 
-    public GameObject CurrentPlayer()
+    public string CurrentPlayerId => playerOrder.Count > 0
+        ? playerOrder[currentPlayerIndex] : "";
+
+    public bool IsOddTurn  => turnNumber % 2 != 0;
+    public bool IsEvenTurn => turnNumber % 2 == 0;
+
+    // Kaç kart turunda bir meme/pokerface safhası başlar?
+    [SerializeField] int memePhaseTriggerEvery = 3;
+
+    void Awake()
     {
-        return players[currentPlayerIndex];
+        if (Instance != null) { Destroy(gameObject); return; }
+        Instance = this;
+        cm = GetComponent<CardManager>();
     }
 
-    public void NextTurn()
-    {
-        currentPlayerIndex++;
+    // ── Oyunu başlat ────────────────────────────────────────────
 
-        if (currentPlayerIndex >= players.Count)
-            currentPlayerIndex = 0;
+    public void StartGame(List<string> orderedPlayerIds)
+    {
+        playerOrder = new List<string>(orderedPlayerIds);
+        currentPlayerIndex = 0;
+        turnNumber = 0;
+        BeginCurrentPlayerTurn();
     }
+
+    // ── Tur başlangıcı ──────────────────────────────────────────
+
+    void BeginCurrentPlayerTurn()
+    {
+        OnTurnStarted?.Invoke(CurrentPlayerId, turnNumber);
+
+        if (ShouldTriggerMemePhase())
+        {
+            OnMemePhaseTriggered?.Invoke();
+            return; // Safha bitince ResumeTurn() çağrılır
+        }
+
+        ExecuteCardPhase();
+    }
+
+    void ExecuteCardPhase()
+    {
+        if (IsOddTurn)
+            HandleOddTurn();
+        else
+            HandleEvenTurn();
+    }
+
+    // Tek tur: ortadan otomatik kart ver
+    void HandleOddTurn()
+    {
+        var card = cm.DrawFromDeck(CurrentPlayerId);
+        OnOddTurnCardDealt?.Invoke(CurrentPlayerId, card);
+        // UI işlemi bitti → oyuncu dizi kurabilir, sonra EndTurn çağırır
+    }
+
+    // Çift tur: oyuncu kart talep etmeli
+    void HandleEvenTurn()
+    {
+        OnEvenTurnRequestRequired?.Invoke(CurrentPlayerId);
+        // UI oyuncudan hedef + kart seçimini bekler
+        // Seçim yapıldığında SubmitCardRequest() çağrılır
+    }
+
+    // ── Dışarıdan çağrılan aksiyonlar ───────────────────────────
+
+    // Çift tur: oyuncu kart talebini gönderir
+    public void SubmitCardRequest(string targetId, CardData requestedCard)
+    {
+        var result = cm.RequestCard(CurrentPlayerId, targetId, requestedCard);
+        OnCardRequestResult?.Invoke(CurrentPlayerId, targetId, requestedCard, result);
+        // Talep sonucu ne olursa olsun tur devam eder
+    }
+
+    // Oyuncu dizi kurmayı bitirdi, turu geçiyor
+    public void EndTurn()
+    {
+        turnNumber++;
+        currentPlayerIndex = (currentPlayerIndex + 1) % playerOrder.Count;
+        BeginCurrentPlayerTurn();
+    }
+
+    // Meme/Pokerface safhası dışarıdan bittiğinde çağrılır
+    public void ResumeTurn()
+    {
+        ExecuteCardPhase();
+    }
+
+    // ── Yardımcılar ─────────────────────────────────────────────
+
+    bool ShouldTriggerMemePhase()
+    {
+        // Her memePhaseTriggerEvery tam turda bir tetikle
+        // (turnNumber, tüm oyuncuların toplam tur sayısı)
+        return turnNumber > 0 && turnNumber % memePhaseTriggerEvery == 0;
+    }
+
+    public string GetNextPlayerId()
+    {
+        int next = (currentPlayerIndex + 1) % playerOrder.Count;
+        return playerOrder[next];
+    }
+
+    // ── Olaylar ─────────────────────────────────────────────────
+
+    public event System.Action<string, int>                            OnTurnStarted;
+    public event System.Action<string, Card>                           OnOddTurnCardDealt;
+    public event System.Action<string>                                 OnEvenTurnRequestRequired;
+    public event System.Action<string, string, CardData, CardRequestResult> OnCardRequestResult;
+    public event System.Action                                         OnMemePhaseTriggered;
 }
