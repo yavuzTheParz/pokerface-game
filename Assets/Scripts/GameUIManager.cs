@@ -39,6 +39,8 @@ public class GameUIManager : MonoBehaviour
     public void CloseRequestPanel() => cardRequestPanel.SetActive(false);
     public GameObject actButtons;
 
+    public TurnManager tm;
+
 
    void Awake()
     {
@@ -122,9 +124,13 @@ public class GameUIManager : MonoBehaviour
 
         formSequenceBtn.interactable = isMyTurn && selectedCards.Count >= 4;
         endTurnBtn.interactable      = isMyTurn;
-        if(isMyTurn)
+        if(isMyTurn && tm.IsOddTurn)
         {
             actButtons.SetActive(isMyTurn);    
+        }
+        if(isMyTurn && tm.IsEvenTurn)
+        {
+            cardRequestPanel.SetActive(isMyTurn);    
         }
         
     }
@@ -187,8 +193,6 @@ public class GameUIManager : MonoBehaviour
 
     // ── Kart talep paneli ────────────────────────────────────────
 
-    void OnRequestCardClicked() =>
-        cardRequestPanel.SetActive(true);
 
     // ── Tur sonu ─────────────────────────────────────────────────
 

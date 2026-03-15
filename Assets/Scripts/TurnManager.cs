@@ -55,12 +55,6 @@ public class TurnManager : MonoBehaviour
 
     void ExecuteCardPhase()
     {
-        if (turnNumber == 0)
-        {
-            // İlk tur: ne kart dağıtımı ne talep — sadece oyuncu hamle yapar
-            OnTurnStarted?.Invoke(CurrentPlayerId, turnNumber);
-            return;
-        }
 
         if (IsOddTurn)
             HandleOddTurn();

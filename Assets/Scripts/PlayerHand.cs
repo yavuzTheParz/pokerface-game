@@ -41,26 +41,39 @@ public class PlayerHand
         return largest;
     }
 
-    // Oyuncu kart talep edebilir mi? (kendi eline dizi oluşturmalı)
+    // Oyuncu kart talep edebilir mi? (kendi eline dizi oluşturmalı)// PlayerHand.cs — CanRequestCard'ı tamamen yeniden yaz
     public bool CanRequestCard(CardData requested)
     {
-        // İstenen kart, eldeki kartlarla geçerli bir dizi kurabilmeli
-        var testHand = new List<Card>(Cards) { new Card(requested, PlayerId) };
-        for (int i = 0; i < testHand.Count - 3; i++)
+        var testCards = new List<Card>(Cards);
+        testCards.Add(new Card(requested, PlayerId));
+
+        // 3 veya daha fazla kartla potansiyel dizi var mı?
+        for (int i = 0; i < testCards.Count - 2; i++)
+        for (int j = i + 1; j < testCards.Count - 1; j++)
+        for (int k = j + 1; k < testCards.Count; k++)
         {
-            for (int j = i + 1; j < testHand.Count - 2; j++)
+            var trio = new List<Card>
             {
-                for (int k = j + 1; k < testHand.Count - 1; k++)
-                {
-                    for (int l = k + 1; l < testHand.Count; l++)
-                    {
-                        var combo = new List<Card> { testHand[i], testHand[j], testHand[k], testHand[l] };
-                        if (combo.Contains(testHand[^1]) &&
-                            SequenceValidator.IsValidSequence(combo, out _))
-                            return true;
-                    }
-                }
-            }
+                testCards[i], testCards[j], testCards[k]
+            };
+
+            // İstenen kart bu grupta olmalı
+            if (!trio.Exists(c => c.data == requested)) continue;
+            if (trio.Exists(c => c.isInSequence)) continue;
+
+            // Bu 3 kart aynı element mi? (ardışık dizi için potansiyel)
+            bool sameElement = trio.TrueForAll(c => c.Element == trio[0].Element);
+            if (sameElement) return true;
+
+            // Aynı değer mi? (4 elementli dizi için potansiyel)
+            bool sameValue = trio.TrueForAll(c => c.Value == trio[0].Value);
+            if (sameValue) return true;
+
+            // Ardışık değerler mi?
+            var vals = trio.ConvertAll(c => c.Value);
+            vals.Sort();
+            bool consecutive = vals[1] == vals[0] + 1 && vals[2] == vals[1] + 1;
+            if (consecutive) return true;
         }
         return false;
     }

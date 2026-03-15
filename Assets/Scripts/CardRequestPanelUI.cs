@@ -23,8 +23,10 @@ public class CardRequestPanelUI : MonoBehaviour
         titleText.text = "Hangi kartı istiyorsun?";
 
         confirmBtn.onClick.AddListener(OnConfirm);
-        cancelBtn.onClick.AddListener(() => GameUIManager.Instance.CloseRequestPanel());
-        cancelBtn.gameObject.SetActive(false);
+        
+        // cancelBtn.gameObject.SetActive(false); ← bunu sil
+        // Zaten çift turda iptal yok, sadece interactable'ı kapat
+        cancelBtn.gameObject.SetActive(false); // sadece görünümü kapat, butonu değil
 
         BuildCardList();
     }
@@ -36,39 +38,50 @@ public class CardRequestPanelUI : MonoBehaviour
     }
 
     // Elindeki kartlarla dizi kurabilecek kartları listele
-    void BuildCardList()
+   // CardRequestPanelUI.cs — BuildCardList başına ekle
+void BuildCardList()
+{
+    foreach (Transform t in cardButtonContainer) Destroy(t.gameObject);
+
+    string localId = NetworkManager.Instance.LocalPlayerId;
+    var hand = CardManager.Instance.GetHand(localId);
+
+    Debug.Log($"AllCardData sayısı: {CardManager.Instance.AllCardData.Count}");
+    Debug.Log($"Eldeki kartlar: {string.Join(", ", hand.Cards.ConvertAll(c => $"{c.Element}{c.Value}"))}");
+
+    int gosterilen = 0;
+    var shown = new HashSet<string>();
+
+    foreach (var cardData in CardManager.Instance.AllCardData)
     {
-        foreach (Transform t in cardButtonContainer) Destroy(t.gameObject);
+        string key = $"{cardData.element}_{cardData.value}";
+        if (shown.Contains(key)) continue;
 
-        string localId = NetworkManager.Instance.LocalPlayerId;
-        var hand = CardManager.Instance.GetHand(localId);
-
-        var shown = new HashSet<string>();
-
-        // Tüm mümkün CardData'ları tara
-        foreach (var cardData in CardManager.Instance.AllCardData)
+        bool alreadyInHand = hand.Cards.Exists(c => c.data == cardData);
+        if (alreadyInHand)
         {
-            string key = $"{cardData.element}_{cardData.value}";
-            if (shown.Contains(key)) continue;
-
-            // Zaten elde var mı? (aynı kartı tekrar isteme)
-            bool alreadyInHand = hand.Cards.Exists(c => c.data == cardData);
-            if (alreadyInHand) continue;
-
-            // Bu kart elde dizi kurabilir mi?
-            if (!hand.CanRequestCard(cardData)) continue;
-
-            shown.Add(key);
-
-            var go  = Instantiate(cardButtonPrefab, cardButtonContainer);
-            var btn = go.GetComponent<Button>();
-            var txt = go.GetComponentInChildren<TextMeshProUGUI>();
-            txt.text = $"{cardData.element} {cardData.value}";
-
-            var captured = cardData;
-            btn.onClick.AddListener(() => SelectCard(captured));
+            Debug.Log($"Zaten elde var, atla: {cardData.element}{cardData.value}");
+            continue;
         }
+
+        bool canRequest = hand.CanRequestCard(cardData);
+        Debug.Log($"Kontrol: {cardData.element}{cardData.value} → CanRequest: {canRequest}");
+
+        if (!canRequest) continue;
+
+        shown.Add(key);
+        gosterilen++;
+
+        var go  = Instantiate(cardButtonPrefab, cardButtonContainer);
+        var btn = go.GetComponent<Button>();
+        var txt = go.GetComponentInChildren<TextMeshProUGUI>();
+        txt.text = $"{cardData.element} {cardData.value}";
+        var captured = cardData;
+        btn.onClick.AddListener(() => SelectCard(captured));
     }
+
+    Debug.Log($"Gösterilen kart sayısı: {gosterilen}");
+}
 
     void SelectCard(CardData data)
     {
@@ -85,5 +98,6 @@ public class CardRequestPanelUI : MonoBehaviour
         TurnManager.Instance.SubmitCardRequest(selectedCardData);
         GameUIManager.Instance.CloseRequestPanel();
         GameUIManager.Instance.RefreshHand();
+        gameObject.SetActive(false); 
     }
 }
