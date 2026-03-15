@@ -72,7 +72,10 @@ public class CardManager : MonoBehaviour
         if (!requester.CanRequestCard(requestedData))
             return CardRequestResult.InvalidRequest;
 
-        // Tüm oyuncuları tara — 2+ aynı kart var mı?
+        var takenCards = new List<Card>();
+        var sourcePlayers = new Dictionary<string, int>(); // kimin elinden kaç tane
+
+        // Tüm oyuncuları tara — dizide olmayan eşleşen kartları topla
         foreach (var kvp in playerHands)
         {
             if (kvp.Key == requesterId) continue;
@@ -80,25 +83,35 @@ public class CardManager : MonoBehaviour
             var matching = kvp.Value.Cards.FindAll(
                 c => c.data == requestedData && !c.isInSequence);
 
-            if (matching.Count >= 2)
+            foreach (var card in matching)
             {
-                var taken = matching[0];
-                kvp.Value.RemoveCard(taken);
-                taken.ownerPlayerId = requesterId;
-                requester.AddCard(taken);
-                OnCardRequestedFromPlayer?.Invoke(requesterId, kvp.Key, taken);
-                return CardRequestResult.TakenFromPlayer;
+                kvp.Value.RemoveCard(card);
+                card.ownerPlayerId = requesterId;
+                requester.AddCard(card);
+                takenCards.Add(card);
+
+                if (!sourcePlayers.ContainsKey(kvp.Key))
+                    sourcePlayers[kvp.Key] = 0;
+                sourcePlayers[kvp.Key]++;
             }
         }
 
-        // Kimde 2+ yoksa desteden ver
-        var card = Deck.Draw();
-        if (card == null) return CardRequestResult.DeckEmpty;
-        card.ownerPlayerId = requesterId;
-        requester.AddCard(card);
-        OnCardDrawnFromDeck?.Invoke(requesterId, card);
+        if (takenCards.Count > 0)
+        {
+            OnCardRequestedFromPlayers?.Invoke(requesterId, sourcePlayers, requestedData);
+            return CardRequestResult.TakenFromPlayer;
+        }
+
+        // Kimde yoksa desteden 1 tane ver
+        var drawn = Deck.DrawSpecific(requestedData);
+        if (drawn == null) return CardRequestResult.DeckEmpty;
+        drawn.ownerPlayerId = requesterId;
+        requester.AddCard(drawn);
+        OnCardRequestedFromDeck?.Invoke(requesterId, requestedData);
         return CardRequestResult.TakenFromDeck;
+
     }
+
 
     // Dizi kurma girişimi
     public bool TryFormSequence(string playerId, List<Card> selectedCards)
@@ -138,7 +151,8 @@ public class CardManager : MonoBehaviour
     // ── Olaylar (UI ve Network bunları dinler) ───────────────────
 
     public event System.Action<string, Card>         OnCardDrawn;
-    public event System.Action<string, string, Card> OnCardRequestedFromPlayer;
+    public event System.Action<string, Dictionary<string, int>, CardData> OnCardRequestedFromPlayers;
+    public event System.Action<string, CardData>                          OnCardRequestedFromDeck;
     public event System.Action<string, Card>         OnCardDrawnFromDeck;
     public event System.Action<string, CardSequence> OnSequenceFormed;
     public event System.Action<string>               OnPlayerWon;
