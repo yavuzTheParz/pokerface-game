@@ -2070,6 +2070,7 @@ MonoBehaviour:
   turnIndicatorText: {fileID: 1570637954}
   formSequenceBtn: {fileID: 1323539753}
   endTurnBtn: {fileID: 2129407856}
+  actButtons: {fileID: 998855890}
 --- !u!1001 &1076940539
 PrefabInstance:
   m_ObjectHideFlags: 0

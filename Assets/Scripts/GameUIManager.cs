@@ -37,6 +37,7 @@ public class GameUIManager : MonoBehaviour
 
     public void OpenRequestPanel()  => cardRequestPanel.SetActive(true);
     public void CloseRequestPanel() => cardRequestPanel.SetActive(false);
+    public GameObject actButtons;
 
 
    void Awake()
@@ -117,14 +118,15 @@ public class GameUIManager : MonoBehaviour
     {
         string localId = NetworkManager.Instance.LocalPlayerId;
         bool isMyTurn  = TurnManager.Instance.CurrentPlayerId == localId;
+        Debug.Log($"UpdateActionButtons — isMyTurn: {isMyTurn} | Current: {TurnManager.Instance.CurrentPlayerId} | Local: {localId}");
 
-        // Dizi kur: en az 4 kart seçili olmalı
         formSequenceBtn.interactable = isMyTurn && selectedCards.Count >= 4;
-
-        // Kart iste: çift tur + sıra bende
-
-        // Turu bitir: sıra bende
-        endTurnBtn.interactable = isMyTurn;
+        endTurnBtn.interactable      = isMyTurn;
+        if(isMyTurn)
+        {
+            actButtons.SetActive(isMyTurn);    
+        }
+        
     }
 
     // ── Dizi kurma ───────────────────────────────────────────────
@@ -176,6 +178,7 @@ public class GameUIManager : MonoBehaviour
     void OnTurnStarted(string playerId, int turnNumber)
     {
         string localId = NetworkManager.Instance.LocalPlayerId;
+        Debug.Log($"Tur başladı: {playerId} | Ben: {localId} | Benim turum: {playerId == localId}");
         string label   = playerId == localId ? "Senin Turun!" : $"{playerId} oynuyor...";
         turnIndicatorText.text = label;
         UpdateActionButtons();
@@ -193,6 +196,7 @@ public class GameUIManager : MonoBehaviour
     {
         GetComponent<GameNetworkBridge>()?.SendEndTurn();
         UpdateActionButtons();
+        actButtons.SetActive(false);
     }
 
     // ── Event handler'lar ────────────────────────────────────────
