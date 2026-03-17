@@ -40,25 +40,61 @@ public class GameNetworkBridge : MonoBehaviourPun
         GameUIManager.Instance?.RefreshHand();
         GameUIManager.Instance?.RefreshScores();
     }
+    // OnEnable içini güncelle
     void OnEnable()
     {
-        cm.OnSequenceFormed          += OnSequenceFormed_Local;
-        cm.OnCardRequestedFromPlayer += OnCardRequested_Local;
-        //sh.OnCursePlaced             += OnCursePlaced_Local;
-        //sh.OnThiefResolved           += OnThiefResolved_Local;
-        //sh.OnSacrificeResolved       += OnSacrificeResolved_Local;
-        tm.OnTurnStarted             += OnTurnStarted_Local;
+        cm.OnSequenceFormed           += OnSequenceFormed_Local;
+        cm.OnCardRequestedFromPlayers += OnCardRequestedFromPlayers_Local;
+        cm.OnCardRequestedFromDeck    += OnCardRequestedFromDeck_Local;
+        tm.OnTurnStarted              += OnTurnStarted_Local;
     }
 
     void OnDisable()
     {
-        cm.OnSequenceFormed          -= OnSequenceFormed_Local;
-        cm.OnCardRequestedFromPlayer -= OnCardRequested_Local;
-        //sh.OnCursePlaced             -= OnCursePlaced_Local;
-        //sh.OnThiefResolved           -= OnThiefResolved_Local;
-        //sh.OnSacrificeResolved       -= OnSacrificeResolved_Local;
-        tm.OnTurnStarted             -= OnTurnStarted_Local;
+        cm.OnSequenceFormed           -= OnSequenceFormed_Local;
+        cm.OnCardRequestedFromPlayers -= OnCardRequestedFromPlayers_Local;
+        cm.OnCardRequestedFromDeck    -= OnCardRequestedFromDeck_Local;
+        tm.OnTurnStarted              -= OnTurnStarted_Local;
     }
+
+    // Oyunculardan alındı
+    void OnCardRequestedFromPlayers_Local(string requesterId,
+        Dictionary<string, int> sources, CardData cardData)
+    {
+        // Dictionary'i string dizisine çevir (RPC sadece temel tipler alır)
+        var sourceIds    = new List<string>(sources.Keys).ToArray();
+        var sourceCounts = new List<int>(sources.Values).ToArray();
+
+        photonView.RPC(nameof(RPC_CardRequestedFromPlayers), RpcTarget.All,
+            requesterId, sourceIds, sourceCounts, cardData.name);
+    }
+
+    [PunRPC]
+    void RPC_CardRequestedFromPlayers(string requesterId,
+        string[] sourceIds, int[] sourceCounts, string cardName)
+    {
+        // Bildirim mesajı oluştur
+        var parts = new List<string>();
+        for (int i = 0; i < sourceIds.Length; i++)
+            parts.Add($"{sourceIds[i]}'den {sourceCounts[i]} kart");
+
+        string msg = $"{requesterId} → {cardName} aldı: {string.Join(", ", parts)}";
+        GameUIManager.Instance?.ShowNotification(msg);
+    }
+
+    // Desteden alındı
+    void OnCardRequestedFromDeck_Local(string requesterId, CardData cardData)
+    {
+        photonView.RPC(nameof(RPC_CardRequestedFromDeck), RpcTarget.All,
+            requesterId, cardData.name);
+    }
+
+    [PunRPC]
+    void RPC_CardRequestedFromDeck(string requesterId, string cardName)
+    {
+        string msg = $"{requesterId} → {cardName} desteden aldı";
+        GameUIManager.Instance?.ShowNotification(msg);
+}
 
     // ── Oyun başlangıcı (sadece host çağırır) ───────────────────
 

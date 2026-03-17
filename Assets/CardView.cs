@@ -16,11 +16,10 @@ public class CardView : MonoBehaviour
     public void Init(Card card)
     {
         runtimeCard      = card;
-        background.color = card.data.elementColor;
         valueText.text   = card.Value.ToString();
         elementText.text = card.Element.ToString();
-
-        selectionHighlight.gameObject.SetActive(false);
+        background.sprite = card.data.cardSprite;
+        //selectionHighlight.gameObject.SetActive(false);
         GetComponent<Button>().onClick.AddListener(OnClicked);
     }
 
@@ -32,7 +31,7 @@ public class CardView : MonoBehaviour
     public void SetSelected(bool selected)
     {
         isSelected = selected;
-        selectionHighlight.gameObject.SetActive(selected);
+        //selectionHighlight.gameObject.SetActive(selected);
 
         // Seçili kart hafifçe yukarı kayar
         var pos = GetComponent<RectTransform>().anchoredPosition;

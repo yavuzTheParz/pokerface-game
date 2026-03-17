@@ -15,6 +15,28 @@ public class Deck
             drawPile.Add(new Card(data, noOwner));
         Shuffle();
     }
+    
+    public Card DrawSpecific(CardData requestedData)
+    {
+        // Önce draw pile'da ara
+        var found = drawPile.Find(c => c.data == requestedData);
+        if (found != null)
+        {
+            drawPile.Remove(found);
+            return found;
+        }
+
+        // Draw pile'da yoksa discard'da ara
+        var foundDiscard = discardPile.Find(c => c.data == requestedData);
+        if (foundDiscard != null)
+        {
+            discardPile.Remove(foundDiscard);
+            return foundDiscard;
+        }
+
+        // Hiç yoksa null dön
+        return null;
+    }
 
     public void Shuffle()
     {
