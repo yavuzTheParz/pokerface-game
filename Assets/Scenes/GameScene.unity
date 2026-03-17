@@ -248,8 +248,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 95.75101, y: -412.29428}
-  m_SizeDelta: {x: -568.4946, y: 597.3912}
+  m_AnchoredPosition: {x: 95.75101, y: -307.85413}
+  m_SizeDelta: {x: -568.4946, y: 402.6628}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &113894507
 MonoBehaviour:
@@ -1586,8 +1586,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ContentSizeFitter
-  m_HorizontalFit: 0
-  m_VerticalFit: 0
+  m_HorizontalFit: 2
+  m_VerticalFit: 2
 --- !u!114 &723813919
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1945,8 +1945,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 365.67725}
-  m_SizeDelta: {x: 0, y: -731.3545}
+  m_AnchoredPosition: {x: 0, y: 282.799}
+  m_SizeDelta: {x: 0, y: -565.6081}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &894715308
 MonoBehaviour:
