@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Photon.Pun;
+using Photon.Realtime;
 
 public class GameUIManager : MonoBehaviour
 {
@@ -77,30 +79,28 @@ public class GameUIManager : MonoBehaviour
 
     public void RefreshHand()
     {
+        string localId = NetworkManager.Instance?.LocalPlayerId;
+        if (localId == null) return;
 
         foreach (Transform t in handPanelContent) Destroy(t.gameObject);
         selectedCards.Clear();
         selectedCardViews.Clear();
 
-        string localId = NetworkManager.Instance.LocalPlayerId;
-        var cards = CardManager.Instance.GetHandCards(localId);
-
-        Debug.Log($"Local ID: {localId} | Kart sayısı: {cards.Count}");
-
-
-        foreach (var card in cards)
-        {
-            var go = Instantiate(cardViewPrefab, handPanelContent);
-            var cv = go.GetComponent<CardView>();
-            cv.Init(card);
-        }
-
+        ShowSequenceInHand(localId); // sekanslar + el kartları
         UpdateActionButtons();
     }
+
 
     // CardView tıklandığında çağrılır
     public void OnCardSelected(Card card, CardView view)
     {
+        // Sadece kendi sıramda seçebiliriz
+        if (TurnManager.Instance.CurrentPlayerId != NetworkManager.Instance.LocalPlayerId)
+            return;
+
+        // Dizideki kartlar seçilemez
+        if (card.isInSequence) return;
+
         if (selectedCards.Contains(card))
         {
             selectedCards.Remove(card);
@@ -116,44 +116,146 @@ public class GameUIManager : MonoBehaviour
         UpdateActionButtons();
     }
 
+
     void UpdateActionButtons()
     {
-        string localId = NetworkManager.Instance.LocalPlayerId;
+        string localId = NetworkManager.Instance?.LocalPlayerId;
+        if (localId == null) return;
+
         bool isMyTurn  = TurnManager.Instance.CurrentPlayerId == localId;
+        bool isOddTurn  = TurnManager.Instance.IsOddTurn;
+        bool isEvenTurn = TurnManager.Instance.IsEvenTurn;
+
         Debug.Log($"UpdateActionButtons — isMyTurn: {isMyTurn} | Current: {TurnManager.Instance.CurrentPlayerId} | Local: {localId}");
 
-        formSequenceBtn.interactable = isMyTurn && selectedCards.Count >= 4;
-        endTurnBtn.interactable      = isMyTurn;
-        if(isMyTurn && tm.IsOddTurn)
+        // Tek tur — aksiyon butonları görünür
+        actButtons.SetActive(isMyTurn && isOddTurn);
+
+        // Çift tur — kart talep paneli açılır
+        if (isMyTurn && isEvenTurn)
+            cardRequestPanel.SetActive(true);
+
+        // Sekans kur: sıra bende + tek tur + en az 4 kart seçili
+        formSequenceBtn.interactable = isMyTurn && isOddTurn && selectedCards.Count >= 4;
+
+        // Turu bitir: sıra bende + tek tur
+        endTurnBtn.interactable = isMyTurn && isOddTurn;
+
+        // Kart butonları: sıra bende + tek tur
+        bool cardsClickable = isMyTurn && isOddTurn;
+        foreach (Transform t in handPanelContent)
         {
-            actButtons.SetActive(isMyTurn);    
+            var cv = t.GetComponent<CardView>();
+            if (cv != null)
+                t.GetComponent<Button>().interactable = cardsClickable;
+
+            // Sekans group içindeki kartlar her zaman pasif
+            if (t.GetComponent<HorizontalLayoutGroup>() != null)
+                foreach (Transform child in t)
+                    if (child.GetComponent<Button>() != null)
+                        child.GetComponent<Button>().interactable = false;
         }
-        if(isMyTurn && tm.IsEvenTurn)
-        {
-            cardRequestPanel.SetActive(isMyTurn);    
-        }
-        
     }
 
     // ── Dizi kurma ───────────────────────────────────────────────
 
     void OnFormSequenceClicked()
     {
+        if (selectedCards.Count < 4)
+        {
+            ShowNotification("En az 4 kart seçmelisin.");
+            return;
+        }
+
         string localId = NetworkManager.Instance.LocalPlayerId;
         bool success = CardManager.Instance.TryFormSequence(localId, selectedCards);
 
         if (success)
         {
-            ShowNotification("Dizi kuruldu!");
+            ShowNotification("Sekans kuruldu!");
             RefreshHand();
-            RefreshScores(); // sadece bu kalır, RefreshSequences() yok
+            RefreshScores();
         }
         else
         {
-            ShowNotification("Geçersiz dizi — kuralları kontrol et.");
+            ShowNotification("Geçersiz sekans.");
+            // Seçimi ve pozisyonları sıfırla
+            foreach (var cv in selectedCardViews) cv.SetSelected(false);
+            selectedCards.Clear();
+            selectedCardViews.Clear();
+            UpdateActionButtons();
         }
     }
 
+    void ShowSequenceInHand(string playerId)
+    {
+        var hand = CardManager.Instance.GetHand(playerId);
+        if (hand == null) return;
+
+        foreach (Transform t in handPanelContent) Destroy(t.gameObject);
+        selectedCards.Clear();
+        selectedCardViews.Clear();
+
+        // Önce sekansları göster
+        foreach (var seq in hand.Sequences)
+            SpawnSequenceGroup(seq);
+
+        // Sonra el kartlarını göster
+        foreach (var card in hand.Cards)
+        {
+            var go = Instantiate(cardViewPrefab, handPanelContent);
+            go.GetComponent<CardView>().Init(card);
+        }
+
+        UpdateActionButtons();
+    }
+
+    void SpawnSequenceGroup(CardSequence sequence)
+    {
+        // Sekans container'ı — renkli outline ile
+        var groupGo = new GameObject("SequenceGroup");
+        groupGo.transform.SetParent(handPanelContent, false);
+
+        var groupRect = groupGo.AddComponent<RectTransform>();
+        groupRect.sizeDelta = new Vector2(sequence.Cards.Count * 80 + 16, 120);
+
+        var groupImage = groupGo.AddComponent<Image>();
+
+        // Sekansın element rengini al — outline için
+        if (sequence.Cards.Count > 0)
+        {
+            Color seqColor = sequence.Cards[0].data.elementColor;
+            seqColor.a = 0.3f;
+            groupImage.color = seqColor;
+        }
+
+        // Outline ekle
+        var outline = groupGo.AddComponent<Outline>();
+        if (sequence.Cards.Count > 0)
+            outline.effectColor = sequence.Cards[0].data.elementColor;
+        outline.effectDistance = new Vector2(3, -3);
+
+        // Layout
+        var layout = groupGo.AddComponent<HorizontalLayoutGroup>();
+        layout.spacing = 4;
+        layout.padding = new RectOffset(8, 8, 8, 8);
+        layout.childControlWidth  = false;
+        layout.childControlHeight = false;
+        layout.childAlignment     = TextAnchor.MiddleCenter;
+
+        // Kartları sıralı ekle
+        var sorted = new System.Collections.Generic.List<Card>(sequence.Cards);
+        sorted.Sort((a, b) => a.Value.CompareTo(b.Value));
+
+        foreach (var card in sorted)
+        {
+            var cardGo = Instantiate(cardViewPrefab, groupGo.transform);
+            var cv = cardGo.GetComponent<CardView>();
+            cv.Init(card);
+            // Sekans kartları tıklanamaz
+            cardGo.GetComponent<Button>().interactable = false;
+        }
+    }
 
     // ── Dizi görünümü ───────────────────────────────────────────
 
@@ -170,12 +272,14 @@ public class GameUIManager : MonoBehaviour
     {
         foreach (Transform t in playerScoreContainer) Destroy(t.gameObject);
 
-        foreach (var playerId in NetworkManager.Instance.GetPlayerIds())
+        foreach (var player in PhotonNetwork.PlayerList)
         {
+            string playerId = player.ActorNumber.ToString();
+            string nickname = player.NickName;
             var hand  = CardManager.Instance.GetHand(playerId);
             var score = hand?.TotalScore ?? 0;
             var go    = Instantiate(playerScorePrefab, playerScoreContainer);
-            go.GetComponent<PlayerScoreUI>().Setup(playerId, score);
+            go.GetComponent<PlayerScoreUI>().Setup(nickname, score);
         }
     }
 
@@ -183,12 +287,26 @@ public class GameUIManager : MonoBehaviour
 
     void OnTurnStarted(string playerId, int turnNumber)
     {
+        // Önceki seçimleri temizle
+        foreach (var cv in selectedCardViews) cv.SetSelected(false);
+        selectedCards.Clear();
+        selectedCardViews.Clear();
+
         string localId = NetworkManager.Instance.LocalPlayerId;
-        Debug.Log($"Tur başladı: {playerId} | Ben: {localId} | Benim turum: {playerId == localId}");
-        string label   = playerId == localId ? "Senin Turun!" : $"{playerId} oynuyor...";
+        string nickname = playerId;
+        foreach (var p in PhotonNetwork.PlayerList)
+        {
+            if (p.ActorNumber.ToString() == playerId)
+            {
+                nickname = p.NickName;
+                break;
+            }
+        }
+
+        string label = playerId == localId ? "Senin Turun!" : $"{nickname} oynuyor...";
         turnIndicatorText.text = label;
         UpdateActionButtons();
-        RefreshHand(); // Seçimleri sıfırla
+        RefreshHand();
     }
 
     // ── Kart talep paneli ────────────────────────────────────────

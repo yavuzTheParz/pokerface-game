@@ -34,7 +34,7 @@ public class TurnManager : MonoBehaviour
     {
         playerOrder = new List<string>(orderedPlayerIds);
         currentPlayerIndex = 0;
-        turnNumber = 0;
+        turnNumber = 1;
         BeginCurrentPlayerTurn();
     }
 
