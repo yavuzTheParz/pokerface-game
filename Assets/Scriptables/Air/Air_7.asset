@@ -16,4 +16,6 @@ MonoBehaviour:
   value: 7
   cardType: 0
   cardSprite: {fileID: 21300000, guid: 9996ff519619ecc419aa6fbda979ba31, type: 3}
+  additionalSprite: {fileID: 21300000, guid: 7b460769a062a9047a119e26da848139, type: 3}
+  wheel: {fileID: 21300000, guid: fa967d247cd51664c87a912680d70e6f, type: 3}
   elementColor: {r: 1, g: 1, b: 1, a: 0}

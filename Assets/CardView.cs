@@ -6,6 +6,8 @@ using TMPro;
 public class CardView : MonoBehaviour
 {
     [SerializeField] Image           background;
+    [SerializeField] Image           wheel;
+    [SerializeField] Image           additionalImage;
     [SerializeField] TextMeshProUGUI valueText;
     [SerializeField] TextMeshProUGUI elementText;
     [SerializeField] Image           selectionBorder; // outline image
@@ -18,6 +20,8 @@ public class CardView : MonoBehaviour
     {
         RuntimeCard      = card;
         background.sprite = card.data.cardSprite;
+        wheel.sprite = card.data.wheel;
+        additionalImage.sprite = card.data.additionalSprite ;
         selectionBorder.sprite = card.data.cardSprite;
         valueText.text   = card.Value.ToString();
         elementText.text = card.Element.ToString();
