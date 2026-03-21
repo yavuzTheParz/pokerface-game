@@ -122,14 +122,12 @@ public class CardManager : MonoBehaviour
         {
             var newSeq = hand.Sequences[^1];
             OnSequenceFormed?.Invoke(playerId, newSeq);
-
-            // Lanet kontrolü — YENİ SATIR
             specialCardHandler.CheckCurses(playerId, newSeq);
-
             CheckWinCondition(playerId);
         }
         return success;
     }
+
 
 
     // ── Kazanma ─────────────────────────────────────────────────

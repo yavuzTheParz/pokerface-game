@@ -94,12 +94,8 @@ public class GameUIManager : MonoBehaviour
     // CardView tıklandığında çağrılır
     public void OnCardSelected(Card card, CardView view)
     {
-        // Sadece kendi sıramda seçebiliriz
         if (TurnManager.Instance.CurrentPlayerId != NetworkManager.Instance.LocalPlayerId)
             return;
-
-        // Dizideki kartlar seçilemez
-        if (card.isInSequence) return;
 
         if (selectedCards.Contains(card))
         {
@@ -115,6 +111,7 @@ public class GameUIManager : MonoBehaviour
         }
         UpdateActionButtons();
     }
+
 
 
     void UpdateActionButtons()
@@ -149,11 +146,6 @@ public class GameUIManager : MonoBehaviour
             if (cv != null)
                 t.GetComponent<Button>().interactable = cardsClickable;
 
-            // Sekans group içindeki kartlar her zaman pasif
-            if (t.GetComponent<HorizontalLayoutGroup>() != null)
-                foreach (Transform child in t)
-                    if (child.GetComponent<Button>() != null)
-                        child.GetComponent<Button>().interactable = false;
         }
     }
 
@@ -196,11 +188,11 @@ public class GameUIManager : MonoBehaviour
         selectedCards.Clear();
         selectedCardViews.Clear();
 
-        // Önce sekansları göster
+        // Önce sekansları göster — her kart direkt handPanelContent'e
         foreach (var seq in hand.Sequences)
-            SpawnSequenceGroup(seq);
+            SpawnSequenceGroup(playerId, seq);
 
-        // Sonra el kartlarını göster
+        // Sonra serbest kartlar
         foreach (var card in hand.Cards)
         {
             var go = Instantiate(cardViewPrefab, handPanelContent);
@@ -210,52 +202,30 @@ public class GameUIManager : MonoBehaviour
         UpdateActionButtons();
     }
 
-    void SpawnSequenceGroup(CardSequence sequence)
+
+    void SpawnSequenceGroup(string playerId, CardSequence sequence)
     {
-        // Sekans container'ı — renkli outline ile
-        var groupGo = new GameObject("SequenceGroup");
-        groupGo.transform.SetParent(handPanelContent, false);
-
-        var groupRect = groupGo.AddComponent<RectTransform>();
-        groupRect.sizeDelta = new Vector2(sequence.Cards.Count * 80 + 16, 120);
-
-        var groupImage = groupGo.AddComponent<Image>();
-
-        // Sekansın element rengini al — outline için
-        if (sequence.Cards.Count > 0)
-        {
-            Color seqColor = sequence.Cards[0].data.elementColor;
-            seqColor.a = 0.3f;
-            groupImage.color = seqColor;
-        }
-
-        // Outline ekle
-        var outline = groupGo.AddComponent<Outline>();
-        if (sequence.Cards.Count > 0)
-            outline.effectColor = sequence.Cards[0].data.elementColor;
-        outline.effectDistance = new Vector2(3, -3);
-
-        // Layout
-        var layout = groupGo.AddComponent<HorizontalLayoutGroup>();
-        layout.spacing = 4;
-        layout.padding = new RectOffset(8, 8, 8, 8);
-        layout.childControlWidth  = false;
-        layout.childControlHeight = false;
-        layout.childAlignment     = TextAnchor.MiddleCenter;
-
-        // Kartları sıralı ekle
-        var sorted = new System.Collections.Generic.List<Card>(sequence.Cards);
+        // Kartları değere göre sırala
+        var sorted = new List<Card>(sequence.Cards);
         sorted.Sort((a, b) => a.Value.CompareTo(b.Value));
 
         foreach (var card in sorted)
         {
-            var cardGo = Instantiate(cardViewPrefab, groupGo.transform);
+            var cardGo = Instantiate(cardViewPrefab, handPanelContent);
             var cv = cardGo.GetComponent<CardView>();
             cv.Init(card);
-            // Sekans kartları tıklanamaz
-            cardGo.GetComponent<Button>().interactable = false;
+            cv.SetSequenceStyle();
         }
+
+        // Sekans sonu ayracı — ince dikey çizgi
+        var divider = new GameObject("Divider");
+        divider.transform.SetParent(handPanelContent, false);
+        var divRect = divider.AddComponent<RectTransform>();
+        divRect.sizeDelta = new Vector2(4, 80);
+        var divImg = divider.AddComponent<Image>();
+        divImg.color = new Color(1, 1, 1, 0.3f);
     }
+
 
     // ── Dizi görünümü ───────────────────────────────────────────
 

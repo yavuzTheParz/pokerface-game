@@ -2327,6 +2327,7 @@ GameObject:
   - component: {fileID: 1000899813}
   - component: {fileID: 1000899812}
   - component: {fileID: 1000899816}
+  - component: {fileID: 1000899817}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -2517,6 +2518,19 @@ MonoBehaviour:
   endTurnBtn: {fileID: 2129407856}
   actButtons: {fileID: 998855890}
   tm: {fileID: 1000899808}
+--- !u!114 &1000899817
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000899805}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6cd24d0813d7951499d70c4a394cac61, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameStarter
+  useTestHand: 1
 --- !u!1001 &1076940539
 PrefabInstance:
   m_ObjectHideFlags: 0

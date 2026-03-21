@@ -41,4 +41,14 @@ public class CardView : MonoBehaviour
             selectionBorder.gameObject.SetActive(selected);
     }
 
+    public void SetSequenceStyle()
+    {
+        // Hafif koyulaştır — dizide olduğunu belli et
+        if (background != null)
+        {
+            Color c = RuntimeCard.data.elementColor;
+            background.color = new Color(c.r * 0.85f, c.g * 0.85f, c.b * 0.85f);
+        }
+    }
+
 }
