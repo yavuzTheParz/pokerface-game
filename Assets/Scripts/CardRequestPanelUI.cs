@@ -43,8 +43,18 @@ void BuildCardList()
 {
     foreach (Transform t in cardButtonContainer) Destroy(t.gameObject);
 
+
     string localId = NetworkManager.Instance.LocalPlayerId;
     var hand = CardManager.Instance.GetHand(localId);
+
+    // Hand null ise henüz oyun başlamamış demek, paneli kapat
+    if (hand == null)
+    {
+        Debug.LogWarning($"Hand bulunamadı: {localId}");
+        GameUIManager.Instance.CloseRequestPanel();
+        return;
+    }
+
 
     Debug.Log($"AllCardData sayısı: {CardManager.Instance.AllCardData.Count}");
     Debug.Log($"Eldeki kartlar: {string.Join(", ", hand.Cards.ConvertAll(c => $"{c.Element}{c.Value}"))}");

@@ -21,13 +21,40 @@ public class PlayerHand
         if (!SequenceValidator.IsValidSequence(selectedCards, out var type))
             return false;
 
-        var seq = new CardSequence();
-        foreach (var c in selectedCards)
+        // Seçili kartlar hangi dizilerde? Onları boz
+        var affectedSequences = new List<CardSequence>();
+        foreach (var card in selectedCards)
         {
-            Cards.Remove(c);
-            seq.AddCard(c);
+            foreach (var seq in Sequences)
+            {
+                if (seq.Cards.Contains(card) && !affectedSequences.Contains(seq))
+                    affectedSequences.Add(seq);
+            }
         }
-        Sequences.Add(seq);
+
+        // Etkilenen dizileri boz — kartları ele geri ver
+        foreach (var seq in affectedSequences)
+        {
+            foreach (var card in seq.Cards)
+            {
+                card.isInSequence = false;
+                // Seçili kartlar zaten yeni diziye gidecek,
+                // diğerleri ele döner
+                if (!selectedCards.Contains(card))
+                    Cards.Add(card);
+            }
+            seq.Cards.Clear();
+            Sequences.Remove(seq);
+        }
+
+        // Yeni diziyi kur
+        var newSeq = new CardSequence();
+        foreach (var card in selectedCards)
+        {
+            Cards.Remove(card); // elden çıkar (dizide olanlar zaten elde değil ama guard olarak)
+            newSeq.AddCard(card);
+        }
+        Sequences.Add(newSeq);
         return true;
     }
 

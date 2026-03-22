@@ -8,6 +8,8 @@ public class CardData : ScriptableObject
     [Range(0, 9)] public int value;
     public CardType cardType = CardType.Normal;
     public Sprite cardSprite;
+    public Sprite additionalSprite;
+    public Sprite wheel;
     public Color elementColor;
 
     // Element karşıtlığı (Kurban kartı için)

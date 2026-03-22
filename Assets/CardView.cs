@@ -6,36 +6,53 @@ using TMPro;
 public class CardView : MonoBehaviour
 {
     [SerializeField] Image           background;
+    [SerializeField] Image           wheel;
+    [SerializeField] Image           additionalImage;
     [SerializeField] TextMeshProUGUI valueText;
     [SerializeField] TextMeshProUGUI elementText;
-    [SerializeField] Image           selectionHighlight;
+    [SerializeField] Image           selectionBorder; // outline image
 
-    Card runtimeCard;
-    bool isSelected = false;
+    public Card RuntimeCard { get; private set; }
+    public bool IsSelected  { get; private set; }
+    Vector2 originalPosition;
 
     public void Init(Card card)
     {
-        runtimeCard      = card;
+        RuntimeCard      = card;
+        background.sprite = card.data.cardSprite;
+        wheel.sprite = card.data.wheel;
+        additionalImage.sprite = card.data.additionalSprite ;
+        selectionBorder.sprite = card.data.cardSprite;
         valueText.text   = card.Value.ToString();
         elementText.text = card.Element.ToString();
-        background.sprite = card.data.cardSprite;
-        //selectionHighlight.gameObject.SetActive(false);
+        SetSelected(false);
+        originalPosition = GetComponent<RectTransform>().anchoredPosition;
+
         GetComponent<Button>().onClick.AddListener(OnClicked);
     }
 
     void OnClicked()
     {
-        GameUIManager.Instance?.OnCardSelected(runtimeCard, this);
+        GameUIManager.Instance?.OnCardSelected(RuntimeCard, this);
     }
 
     public void SetSelected(bool selected)
     {
-        isSelected = selected;
-        //selectionHighlight.gameObject.SetActive(selected);
+        IsSelected = selected;
 
-        // Seçili kart hafifçe yukarı kayar
-        var pos = GetComponent<RectTransform>().anchoredPosition;
-        pos.y = selected ? 20f : 0f;
-        GetComponent<RectTransform>().anchoredPosition = pos;
+
+        if (selectionBorder != null)
+            selectionBorder.gameObject.SetActive(selected);
     }
+
+    public void SetSequenceStyle()
+    {
+        // Hafif koyulaştır — dizide olduğunu belli et
+        if (background != null)
+        {
+            Color c = RuntimeCard.data.elementColor;
+            background.color = new Color(c.r * 0.85f, c.g * 0.85f, c.b * 0.85f);
+        }
+    }
+
 }

@@ -21,6 +21,32 @@ public class GameNetworkBridge : MonoBehaviourPun
         sh = GetComponent<SpecialCardHandler>();
         tm = GetComponent<TurnManager>();
     }
+
+    System.Collections.IEnumerator WaitAndStart()
+    {
+        if (!PhotonNetwork.IsMasterClient) yield break; // sadece host başlatır
+
+        // Tüm oyuncular sahneye yüklenene kadar bekle
+        int expectedCount = PhotonNetwork.CurrentRoom.PlayerCount;
+        
+        float timeout = 10f;
+        float elapsed  = 0f;
+
+        while (elapsed < timeout)
+        {
+            // Tüm oyuncular hazır mı? (basit yaklaşım: biraz bekle)
+            yield return new WaitForSeconds(0.5f);
+            elapsed += 0.5f;
+
+            if (PhotonNetwork.PlayerList.Length >= expectedCount)
+                break;
+        }
+
+        yield return new WaitForSeconds(0.5f); // son buffer
+        StartGameIfHost();
+    }
+
+
     [PunRPC]
     void RPC_StartGame(string[] playerIds, int seed)
     {

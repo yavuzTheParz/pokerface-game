@@ -9,7 +9,7 @@ public class CardSequence
 
     public enum SequenceType { SameColor, SameValue, ElementCombo }
 
-    public int ScoreValue => Cards.Sum(c => c.Value + 1); // 0 değerli kart da puan kazandırır
+    public int ScoreValue => Cards.Sum(c => c.Value == 0 ? 1 : c.Value);
 
     public void AddCard(Card card)
     {
