@@ -92,6 +92,7 @@ public class TurnManager : MonoBehaviour
     // Oyuncu dizi kurmayı bitirdi, turu geçiyor
     public void EndTurn()
     {
+        GetComponent<SpecialCardHandler>()?.OnTurnPassed();
         turnNumber++;
         currentPlayerIndex = (currentPlayerIndex + 1) % playerOrder.Count;
         BeginCurrentPlayerTurn();

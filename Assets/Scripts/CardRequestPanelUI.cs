@@ -41,17 +41,20 @@ public class CardRequestPanelUI : MonoBehaviour
    // CardRequestPanelUI.cs — BuildCardList başına ekle
 void BuildCardList()
 {
+
     foreach (Transform t in cardButtonContainer) Destroy(t.gameObject);
 
+    string localId = NetworkManager.Instance?.LocalPlayerId;
+    if (string.IsNullOrEmpty(localId))
+    {
+        GameUIManager.Instance?.CloseRequestPanel();
+        return;
+    }
 
-    string localId = NetworkManager.Instance.LocalPlayerId;
-    var hand = CardManager.Instance.GetHand(localId);
-
-    // Hand null ise henüz oyun başlamamış demek, paneli kapat
+    var hand = CardManager.Instance?.GetHand(localId);
     if (hand == null)
     {
-        Debug.LogWarning($"Hand bulunamadı: {localId}");
-        GameUIManager.Instance.CloseRequestPanel();
+        GameUIManager.Instance?.CloseRequestPanel();
         return;
     }
 

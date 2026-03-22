@@ -4,21 +4,17 @@ using System;
 [Serializable]
 public class CurseCondition
 {
-    public string curserId;       // Laneti yapan
-    public string cursedId;       // Lanetlenen
+    public string curserId;
+    public string cursedId;
 
-    // Koşul: belirli bir element + belirli bir değer içeren dizi kurarsa
-    public CardElement? requiredElement; // null = herhangi
-    public int?        requiredValue;   // null = herhangi
-    public bool        mustBeConsecutive;
+    public CardElement? requiredElement; // null = herhangi element
+    public int?        requiredValue;   // null = herhangi değer
+    public int         turnsRemaining = 5;
+    public bool        IsActive => turnsRemaining > 0;
 
-    // Lanet aktif mi?
-    public bool IsActive { get; private set; } = true;
+    public void OnTurnPassed() => turnsRemaining--;
 
-    public void Deactivate() => IsActive = false;
-
-    // Kurulan diziyi koşulla karşılaştır
-    public bool IsTriggedBy(CardSequence sequence)
+    public bool IsTriggeredBy(CardSequence sequence)
     {
         if (!IsActive) return false;
 

@@ -33,7 +33,14 @@ public class CardView : MonoBehaviour
 
     void OnClicked()
     {
-        GameUIManager.Instance?.OnCardSelected(RuntimeCard, this);
+            if (RuntimeCard.Type == CardType.Curse)
+            {
+                // Lanet panelini aç
+                GameUIManager.Instance?.OpenCursePanel(RuntimeCard);
+                return;
+            }
+            GameUIManager.Instance?.OnCardSelected(RuntimeCard, this);
+
     }
 
     public void SetSelected(bool selected)

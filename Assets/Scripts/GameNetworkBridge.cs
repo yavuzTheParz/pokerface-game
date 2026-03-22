@@ -73,6 +73,10 @@ public class GameNetworkBridge : MonoBehaviourPun
         cm.OnCardRequestedFromPlayers += OnCardRequestedFromPlayers_Local;
         cm.OnCardRequestedFromDeck    += OnCardRequestedFromDeck_Local;
         tm.OnTurnStarted              += OnTurnStarted_Local;
+
+        sh.OnCursePlaced   += OnCursePlaced_Local;
+        sh.OnCurseTriggered += OnCurseTriggered_Local;
+        sh.OnCurseExpired  += OnCurseExpired_Local;
     }
 
     void OnDisable()
@@ -81,6 +85,10 @@ public class GameNetworkBridge : MonoBehaviourPun
         cm.OnCardRequestedFromPlayers -= OnCardRequestedFromPlayers_Local;
         cm.OnCardRequestedFromDeck    -= OnCardRequestedFromDeck_Local;
         tm.OnTurnStarted              -= OnTurnStarted_Local;
+
+        sh.OnCursePlaced   += OnCursePlaced_Local;
+        sh.OnCurseTriggered += OnCurseTriggered_Local;
+        sh.OnCurseExpired  += OnCurseExpired_Local;
     }
 
     // Oyunculardan alındı
@@ -191,15 +199,39 @@ public class GameNetworkBridge : MonoBehaviourPun
 
     [PunRPC]
     void RPC_CursePlaced(string curserId, string cursedId)
-    {
-        string localId = NetworkManager.Instance.LocalPlayerId;
+{
+    string localId = NetworkManager.Instance.LocalPlayerId;
+    if (localId == curserId)
+        GameUIManager.Instance?.ShowNotification("Lanet yerleştirildi.");
+    else if (localId == cursedId)
+        GameUIManager.Instance?.ShowNotification("Üzerinde bir lanet var...");
+}
 
-        if (localId == curserId)
-            UIManager.Instance?.ShowCurseFeedback("Lanet yerleştirildi.");
-        else if (localId == cursedId)
-            UIManager.Instance?.ShowCurseFeedback("Üzerinde bir lanet var...");
-        // Diğer oyuncular hiçbir şey görmez
-    }
+void OnCurseTriggered_Local(string curserId, string cursedId, CardSequence seq)
+{
+    photonView.RPC(nameof(RPC_CurseTriggered), RpcTarget.All, curserId, cursedId);
+}
+
+[PunRPC]
+void RPC_CurseTriggered(string curserId, string cursedId)
+{
+    GameUIManager.Instance?.ShowNotification($"Lanet tetiklendi! {cursedId} → {curserId}");
+    GameUIManager.Instance?.RefreshHand();
+    GameUIManager.Instance?.RefreshScores();
+}
+
+void OnCurseExpired_Local(string cursedId)
+{
+    photonView.RPC(nameof(RPC_CurseExpired), RpcTarget.All, cursedId);
+}
+
+[PunRPC]
+void RPC_CurseExpired(string cursedId)
+{
+    string localId = NetworkManager.Instance.LocalPlayerId;
+    if (localId == cursedId)
+        GameUIManager.Instance?.ShowNotification("Üzerindeki lanet kalktı.");
+}
 
     // ── Hırsız kartı ────────────────────────────────────────────
 
