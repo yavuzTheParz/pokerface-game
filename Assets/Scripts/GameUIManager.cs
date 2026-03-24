@@ -33,11 +33,30 @@ public class GameUIManager : MonoBehaviour
     [SerializeField] Button formSequenceBtn;
     [SerializeField] Button endTurnBtn;
 
+    [SerializeField] GameObject cursePanel;
+
+    public void OpenCursePanel(Card card)
+    {
+        cursePanel.SetActive(true);
+    }
+
     // Seçili kartlar
     readonly List<CardView> selectedCardViews = new();
     readonly List<Card>     selectedCards     = new();
 
-    public void OpenRequestPanel()  => cardRequestPanel.SetActive(true);
+   public void OpenRequestPanel()
+{
+    string localId = NetworkManager.Instance?.LocalPlayerId;
+    var hand = CardManager.Instance?.GetHand(localId);
+    
+    if (hand == null)
+    {
+        Debug.LogWarning("El henüz hazır değil, panel açılmıyor.");
+        return;
+    }
+    
+    cardRequestPanel.SetActive(true);
+}
     public void CloseRequestPanel() => cardRequestPanel.SetActive(false);
     public GameObject actButtons;
 

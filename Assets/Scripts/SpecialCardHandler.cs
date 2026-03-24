@@ -90,20 +90,41 @@ public class SpecialCardHandler : MonoBehaviour
                   $"Element: {condition.requiredElement}, Değer: {condition.requiredValue}");
     }
 
-    // Her dizi kurulduğunda çağrılır — laneti kontrol eder
-    public void CheckCurses(string playerId, CardSequence newSequence)
-    {
-        var triggered = activeCurses
-            .Where(c => c.cursedId == playerId && c.IsTriggedBy(newSequence))
-            .ToList();
+    // Her dizi kurulduğunda çağrılır — laneti kontrol eder// SpecialCardHandler.cs — CheckCurses ve tur geçişi güncelle
 
-        foreach (var curse in triggered)
+// Mevcut CheckCurses metodunu güncelle
+public void CheckCurses(string playerId, CardSequence newSequence)
+{
+    var triggered = activeCurses
+        .FindAll(c => c.cursedId == playerId && c.IsTriggeredBy(newSequence));
+
+    foreach (var curse in triggered)
+    {
+        TransferSequenceToCurser(curse, newSequence);
+        activeCurses.Remove(curse);
+    }
+}
+
+// Yeni metod — her tur geçişinde çağrılır
+public void OnTurnPassed()
+{
+    var expired = new List<CurseCondition>();
+
+    foreach (var curse in activeCurses)
+    {
+        curse.OnTurnPassed();
+        if (!curse.IsActive)
         {
-            TransferSequenceToCurser(curse, newSequence);
-            curse.Deactivate();
-            activeCurses.Remove(curse);
+            expired.Add(curse);
+            OnCurseExpired?.Invoke(curse.cursedId);
         }
     }
+
+    foreach (var c in expired)
+        activeCurses.Remove(c);
+}
+
+public event System.Action<string> OnCurseExpired;
 
     void TransferSequenceToCurser(CurseCondition curse, CardSequence sequence)
     {
