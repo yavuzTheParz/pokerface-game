@@ -55,12 +55,24 @@ public class TurnManager : MonoBehaviour
 
     void ExecuteCardPhase()
     {
+        string localId = NetworkManager.Instance.LocalPlayerId;
+        bool isMyTurn = CurrentPlayerId == localId;
 
         if (IsOddTurn)
-            HandleOddTurn();
+        {
+            // Tek turda host kartı dağıtır, herkes kendi ekranında kartını alır
+            if (Photon.Pun.PhotonNetwork.IsMasterClient) 
+                HandleOddTurn();
+        }
         else
-            HandleEvenTurn();
-
+        {
+            // ÇİFT TUR: Sadece sırası gelen oyuncuda panel açılır
+            if (isMyTurn)
+            {
+                GameUIManager.Instance?.OpenRequestPanel();
+                OnEvenTurnRequestRequired?.Invoke(CurrentPlayerId);
+            }
+        }
     }
 
     // Tek tur: ortadan otomatik kart ver

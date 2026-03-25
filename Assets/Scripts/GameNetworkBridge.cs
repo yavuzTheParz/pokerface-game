@@ -155,8 +155,9 @@ public class GameNetworkBridge : MonoBehaviourPun
     [PunRPC]
     void RPC_TurnStarted(string playerId, int turnNumber)
     {
-        // Diğer oyuncuların UI'ını güncelle
-        UIManager.Instance?.ShowTurnIndicator(playerId, turnNumber);
+        
+        GameUIManager.Instance?.RefreshHand();
+        GameUIManager.Instance?.ShowTurnIndicator(playerId, turnNumber);
     }
 
     // ── Kart talebi ─────────────────────────────────────────────

@@ -133,38 +133,34 @@ public class GameUIManager : MonoBehaviour
 
 
 
+    // GameUIManager.cs içindeki UpdateActionButtons metodunu güncelle
     void UpdateActionButtons()
     {
         string localId = NetworkManager.Instance?.LocalPlayerId;
         if (localId == null) return;
 
-        bool isMyTurn  = TurnManager.Instance.CurrentPlayerId == localId;
-        bool isOddTurn  = TurnManager.Instance.IsOddTurn;
-        bool isEvenTurn = TurnManager.Instance.IsEvenTurn;
+        bool isMyTurn = TurnManager.Instance.CurrentPlayerId == localId;
+        
+        // Aksiyon butonları (Sekans Kur ve Tur Bitir) her iki durumda da aktif olmalı
+        // Çünkü kart istendikten sonra da sekans kurulabilir.
+        actButtons.SetActive(isMyTurn); 
 
-        Debug.Log($"UpdateActionButtons — isMyTurn: {isMyTurn} | Current: {TurnManager.Instance.CurrentPlayerId} | Local: {localId}");
+        // Sekans kur butonu: Sıra bende ve yeterli kart var
+        formSequenceBtn.interactable = isMyTurn && selectedCards.Count >= 4;
 
-        // Tek tur — aksiyon butonları görünür
-        actButtons.SetActive(isMyTurn && isOddTurn);
+        // Turu bitir: Sıra bende (kart istemiş veya çekmiş olmalı)
+        endTurnBtn.interactable = isMyTurn;
 
-        // Çift tur — kart talep paneli açılır
-        if (isMyTurn && isEvenTurn)
-            cardRequestPanel.SetActive(true);
-
-        // Sekans kur: sıra bende + tek tur + en az 4 kart seçili
-        formSequenceBtn.interactable = isMyTurn && isOddTurn && selectedCards.Count >= 4;
-
-        // Turu bitir: sıra bende + tek tur
-        endTurnBtn.interactable = isMyTurn && isOddTurn;
-
-        // Kart butonları: sıra bende + tek tur
-        bool cardsClickable = isMyTurn && isOddTurn;
+        // Kartların seçilebilirliği
+        bool cardsClickable = isMyTurn;
         foreach (Transform t in handPanelContent)
         {
             var cv = t.GetComponent<CardView>();
             if (cv != null)
-                t.GetComponent<Button>().interactable = cardsClickable;
-
+            {
+                var btn = t.GetComponent<Button>();
+                if(btn != null) btn.interactable = cardsClickable;
+            }
         }
     }
 
