@@ -133,34 +133,24 @@ public class GameUIManager : MonoBehaviour
 
 
 
-    // GameUIManager.cs içindeki UpdateActionButtons metodunu güncelle
+    // GameUIManager.cs
     void UpdateActionButtons()
     {
         string localId = NetworkManager.Instance?.LocalPlayerId;
-        if (localId == null) return;
-
         bool isMyTurn = TurnManager.Instance.CurrentPlayerId == localId;
+
+        // KURAL: Sekans kurma her zaman aktif olabilir (Eğer elinde kart varsa)
+        // Ancak sadece kendi sıranızda 'Turu Bitir' diyebilirsiniz.
+        formSequenceBtn.interactable = selectedCards.Count >= 4; 
         
-        // Aksiyon butonları (Sekans Kur ve Tur Bitir) her iki durumda da aktif olmalı
-        // Çünkü kart istendikten sonra da sekans kurulabilir.
-        actButtons.SetActive(isMyTurn); 
-
-        // Sekans kur butonu: Sıra bende ve yeterli kart var
-        formSequenceBtn.interactable = isMyTurn && selectedCards.Count >= 4;
-
-        // Turu bitir: Sıra bende (kart istemiş veya çekmiş olmalı)
+        // Turu bitirme sadece sırası gelende aktif
         endTurnBtn.interactable = isMyTurn;
 
-        // Kartların seçilebilirliği
-        bool cardsClickable = isMyTurn;
-        foreach (Transform t in handPanelContent)
+        // Kart isteme paneli kilitlenmesini önlemek için:
+        // Eğer sıra bende değilse request panelini zorla kapat
+        if (!isMyTurn) 
         {
-            var cv = t.GetComponent<CardView>();
-            if (cv != null)
-            {
-                var btn = t.GetComponent<Button>();
-                if(btn != null) btn.interactable = cardsClickable;
-            }
+            cardRequestPanel.SetActive(false);
         }
     }
 

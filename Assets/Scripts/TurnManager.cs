@@ -34,7 +34,7 @@ public class TurnManager : MonoBehaviour
     {
         playerOrder = new List<string>(orderedPlayerIds);
         currentPlayerIndex = 0;
-        turnNumber = 1;
+        turnNumber = 0;
         BeginCurrentPlayerTurn();
     }
 
@@ -83,12 +83,15 @@ public class TurnManager : MonoBehaviour
         // UI işlemi bitti → oyuncu dizi kurabilir, sonra EndTurn çağırır
     }
 
-    // Çift tur: oyuncu kart talep etmeli
+    // TurnManager.cs
     void HandleEvenTurn()
     {
-        // Buton yerine panel otomatik açılır
-        GameUIManager.Instance?.OpenRequestPanel();
-        OnEvenTurnRequestRequired?.Invoke(CurrentPlayerId);
+        // Sadece sırası gelen oyuncu (LocalPlayer) paneli görmeli
+        if (CurrentPlayerId == NetworkManager.Instance.LocalPlayerId)
+        {
+            GameUIManager.Instance?.OpenRequestPanel();
+            OnEvenTurnRequestRequired?.Invoke(CurrentPlayerId);
+        }
     }
 
 
