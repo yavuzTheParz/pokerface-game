@@ -82,18 +82,37 @@ public class TurnManager : MonoBehaviour
         OnOddTurnCardDealt?.Invoke(CurrentPlayerId, card);
         // UI işlemi bitti → oyuncu dizi kurabilir, sonra EndTurn çağırır
     }
+    
+    // TurnManager.cs içine eklenecek metod:
+    public void SetLocalTurnData(string playerId, int turnNum)
+    {
+        // playerOrder içinde bu ID'nin kaçıncı indekste olduğunu bul
+        int index = playerOrder.IndexOf(playerId);
+        if (index != -1)
+        {
+            currentPlayerIndex = index;
+            turnNumber = turnNum;
+            Debug.Log($"[LocalUpdate] Sıra güncellendi: {playerId}, Tur: {turnNum}");
+        }
+    }
 
     // TurnManager.cs
     void HandleEvenTurn()
     {
-        // Sadece sırası gelen oyuncu (LocalPlayer) paneli görmeli
-        if (CurrentPlayerId == NetworkManager.Instance.LocalPlayerId)
+        string localId = NetworkManager.Instance.LocalPlayerId;
+        
+        // Sadece sırası gelen oyuncuda (CurrentPlayerId) panel açılır
+        if (CurrentPlayerId == localId)
         {
             GameUIManager.Instance?.OpenRequestPanel();
             OnEvenTurnRequestRequired?.Invoke(CurrentPlayerId);
         }
+        else 
+        {
+            // Sırası olmayan oyuncuda panelin kapalı olduğundan emin ol
+            GameUIManager.Instance?.CloseRequestPanel(); 
+        }
     }
-
 
     // ── Dışarıdan çağrılan aksiyonlar ───────────────────────────
 

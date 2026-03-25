@@ -134,24 +134,21 @@ public class GameUIManager : MonoBehaviour
 
 
     // GameUIManager.cs
-    void UpdateActionButtons()
+    public void UpdateActionButtons()
     {
         string localId = NetworkManager.Instance?.LocalPlayerId;
+        if (string.IsNullOrEmpty(localId)) return;
+
         bool isMyTurn = TurnManager.Instance.CurrentPlayerId == localId;
 
-        // KURAL: Sekans kurma her zaman aktif olabilir (Eğer elinde kart varsa)
-        // Ancak sadece kendi sıranızda 'Turu Bitir' diyebilirsiniz.
-        formSequenceBtn.interactable = selectedCards.Count >= 4; 
-        
-        // Turu bitirme sadece sırası gelende aktif
-        endTurnBtn.interactable = isMyTurn;
+        // ÖNEMLİ: Tur tipine (Tek/Çift) bakmaksızın, sıra bendeyse butonlar görünmeli!
+        actButtons.SetActive(isMyTurn); 
 
-        // Kart isteme paneli kilitlenmesini önlemek için:
-        // Eğer sıra bende değilse request panelini zorla kapat
-        if (!isMyTurn) 
-        {
-            cardRequestPanel.SetActive(false);
-        }
+        // Sekans Kur butonu: Seçili kart varsa aktif olsun
+        formSequenceBtn.interactable = isMyTurn && selectedCards.Count >= 4;
+
+        // Turu Bitir butonu: Sıra bendeyse hep aktif (kart çektikten/istedikten sonra basabilmesi için)
+        endTurnBtn.interactable = isMyTurn;
     }
 
     // ── Dizi kurma ───────────────────────────────────────────────

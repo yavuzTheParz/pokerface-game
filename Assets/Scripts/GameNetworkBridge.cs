@@ -153,11 +153,14 @@ public class GameNetworkBridge : MonoBehaviourPun
     }
 
     [PunRPC]
-    void RPC_TurnStarted(string playerId, int turnNumber)
+    void RPC_TurnStarted(string playerId, int turnNum)
     {
+        // TurnManager'ın local state'ini zorla güncelle
+        // (TurnManager'da bu değişkenleri public veya bir metotla güncellenebilir yapmalısın)
+        tm.SetLocalTurnData(playerId, turnNum); 
         
         GameUIManager.Instance?.RefreshHand();
-        GameUIManager.Instance?.ShowTurnIndicator(playerId, turnNumber);
+        GameUIManager.Instance?.UpdateActionButtons();
     }
 
     // ── Kart talebi ─────────────────────────────────────────────
